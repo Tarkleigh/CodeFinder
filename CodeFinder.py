@@ -3,6 +3,8 @@ import csv
 import subprocess
 import argparse
 
+JAVA_FILE_TYPE = os.extsep + "java"
+
 source_label = "Source"
 target_label = "Target"
 
@@ -15,17 +17,22 @@ def find_import_strings(root_directory, dependencies):
 
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
-        if item.endswith(".java"):
-            package_index = item_full_path.find("java/")
-            package_string = item_full_path[package_index + 5:-5]
-            package_string = package_string.replace("/", ".")
+        if item.endswith(JAVA_FILE_TYPE):
+            package_string = get_package_string(item_full_path)
             dependencies.add(package_string)
 
         if os.path.isdir(item_full_path):
             find_import_strings(item_full_path, dependencies)
 
 
-def check_for_dependencies(java_class, item_full_path, dependencies):
+def get_package_string(item_full_path):
+    package_index = item_full_path.find("java" + os.sep)
+    package_string = item_full_path[package_index + 5:-5]
+    package_string = package_string.replace(os.sep, ".")
+    return package_string
+
+
+def check_for_dependencies(item_full_path, dependencies):
     import_section_reached = False
 
     with open(item_full_path) as f:
@@ -37,9 +44,7 @@ def check_for_dependencies(java_class, item_full_path, dependencies):
                 import_section_reached = True
                 import_string = line[7: -2]
                 if import_string in dependencies:
-                    package_index = item_full_path.find("java/")
-                    package_string = item_full_path[package_index + 5:-5]
-                    package_string = package_string.replace("/", ".")
+                    package_string = get_package_string(item_full_path)
                     usages.setdefault(import_string, []).append(package_string)
             elif import_section_reached:
                 # Done with import section
@@ -51,8 +56,8 @@ def search_target_repo(root_dir, dependencies):
 
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
-        if item.endswith(".java"):
-            check_for_dependencies(item, item_full_path, dependencies)
+        if item.endswith(JAVA_FILE_TYPE):
+            check_for_dependencies(item_full_path, dependencies)
 
         if os.path.isdir(item_full_path):
             search_target_repo(item_full_path, dependencies)
