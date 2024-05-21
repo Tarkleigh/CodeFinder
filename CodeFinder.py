@@ -65,6 +65,7 @@ def check_for_dependencies(item_full_path, dependencies):
 
 def search_target_repo(root_dir, dependencies):
     root_dir = os.path.abspath(root_dir)
+    print("Checking for dependencies in " + root_dir)
 
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
