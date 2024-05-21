@@ -5,11 +5,23 @@ import argparse
 
 JAVA_FILE_TYPE = os.extsep + "java"
 
-source_label = "Source"
-target_label = "Target"
-
 collected_dependencies = set()
 usages = dict()
+
+
+def find_label(root_directory):
+    index = root_directory.find("src")
+    if index != -1:
+        # Use the directory above src for the label
+        before_src = root_directory[:index - 1]
+        former_seperator = before_src.rfind(os.sep)
+        label = before_src[former_seperator + 1:]
+        return label
+    else:
+        # Use the current directory as label
+        former_seperator = root_directory.rfind(os.sep)
+        label = root_directory[former_seperator + 1:]
+        return label
 
 
 def find_import_strings(root_directory, dependencies):
@@ -93,6 +105,9 @@ parser.add_argument("source_root")
 parser.add_argument("target_root")
 
 args = parser.parse_args()
+
+source_label = find_label(args.source_root)
+target_label = find_label(args.target_root)
 
 find_import_strings(args.source_root, collected_dependencies)
 print(str(len(collected_dependencies)) + " possible dependencies found in source repository")
