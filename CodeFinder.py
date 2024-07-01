@@ -2,6 +2,9 @@ import os
 import csv
 import subprocess
 import argparse
+import tkinter
+
+from tkinter.filedialog import askdirectory
 
 JAVA_FILE_TYPE = os.extsep + "java"
 
@@ -99,22 +102,32 @@ def create_and_open_csv_file(data):
     subprocess.call(["open", csv_file_path])
 
 
+def get_root_directory(directory_from_command_line, dialogue_title):
+    if directory_from_command_line is None:
+        tkinter.Tk().withdraw()  # we don't want a full GUI, so keep the root window from appearing
+        return askdirectory(title=dialogue_title)  # show an "Open" dialog box and return the path to the selected file
+    else:
+        return directory_from_command_line
+
 parser = argparse.ArgumentParser(
     prog='CodeFinder',
     description='Finds the usages of code from the source repo in the target repo')
-parser.add_argument("source_root")
-parser.add_argument("target_root")
+parser.add_argument("--source_root", required=False)
+parser.add_argument("--target_root", required=False)
 
 args = parser.parse_args()
 
-source_label = find_label(args.source_root)
-target_label = find_label(args.target_root)
+source_root = get_root_directory(args.source_root, "Select source repository")
+target_root = get_root_directory(args.target_root, "Select target repository")
 
-find_import_strings(args.source_root, collected_dependencies)
+source_label = find_label(source_root)
+target_label = find_label(target_root)
+
+find_import_strings(source_root, collected_dependencies)
 print(str(len(collected_dependencies)) + " possible dependencies found in source repository")
 
 print("Starting to scan target repository for code from the source repository")
-search_target_repo(args.target_root, collected_dependencies)
+search_target_repo(target_root, collected_dependencies)
 print("Usages of " + str(len(usages.keys())) + " classes found")
 
 print("Converting found usages to CSV format")
