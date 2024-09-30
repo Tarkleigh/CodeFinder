@@ -12,7 +12,7 @@ collected_dependencies = set()
 usages = dict()
 
 
-def find_label(root_directory):
+def find_label(root_directory: str) -> str:
     index = root_directory.find("src")
     if index != -1:
         # Use the directory above src for the label
