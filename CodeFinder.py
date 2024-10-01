@@ -4,6 +4,7 @@ import subprocess
 import argparse
 import tkinter
 
+from argparse import Namespace
 from tkinter.filedialog import askdirectory
 
 JAVA_FILE_TYPE = os.extsep + "java"
@@ -91,7 +92,7 @@ def convert_found_data_to_csv(found_usages: dict[str, list[str]], source_label: 
     return data
 
 
-def create_and_open_csv_file(data):
+def create_and_open_csv_file(data: list[list[str]]):
     # File path for the CSV file
     csv_file_path = 'dependency_usages.csv'
     # Open the file in write mode
@@ -103,7 +104,7 @@ def create_and_open_csv_file(data):
     subprocess.call(["open", csv_file_path])
 
 
-def get_root_directory(directory_from_command_line, dialogue_title):
+def get_root_directory(directory_from_command_line: str, dialogue_title: str) -> str:
     if directory_from_command_line is None:
         tkinter.Tk().withdraw()  # we don't want a full GUI, so keep the root window from appearing
         return askdirectory(title=dialogue_title)  # show an "Open" dialog box and return the path to the selected file
@@ -111,14 +112,16 @@ def get_root_directory(directory_from_command_line, dialogue_title):
         return directory_from_command_line
 
 
-def main():
+def get_command_line_arguments() -> Namespace:
     parser = argparse.ArgumentParser(
         prog='CodeFinder',
         description='Finds the usages of code from the source repo in the target repo')
     parser.add_argument("--source_root", required=False)
     parser.add_argument("--target_root", required=False)
+    return parser.parse_args()
 
-    args = parser.parse_args()
+def main():
+    args = get_command_line_arguments()
 
     source_root = get_root_directory(args.source_root, "Select source repository")
     target_root = get_root_directory(args.target_root, "Select target repository")
