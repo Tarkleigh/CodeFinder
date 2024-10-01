@@ -79,10 +79,11 @@ def search_target_repo(root_dir, dependencies):
             search_target_repo(item_full_path, dependencies)
 
 
-def convert_found_data_to_csv(usages):
+def convert_found_data_to_csv(found_usages: dict[str, list[str]], source_label: str, target_label: str) -> list[
+    list[str]]:
     data = [["Source Module", "Used Class", "Target Module", "Consuming Class"]]
-    for key in usages.keys():
-        usages_of_key = usages[key]
+    for key in found_usages.keys():
+        usages_of_key = found_usages[key]
         for usage in usages_of_key:
             data_row = [source_label, key, target_label, usage]
             data.append(data_row)
@@ -133,7 +134,7 @@ def main():
     print("Usages of " + str(len(usages.keys())) + " classes found")
 
     print("Converting found usages to CSV format")
-    converted_data = convert_found_data_to_csv(usages)
+    converted_data = convert_found_data_to_csv(usages, source_label, target_label)
     create_and_open_csv_file(converted_data)
 
 
