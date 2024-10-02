@@ -28,27 +28,27 @@ def find_label(root_directory: str) -> str:
         return label
 
 
-def find_import_strings(root_directory, dependencies):
+def find_import_strings(root_directory: str, dependencies: set[str]):
     root_dir = os.path.abspath(root_directory)
 
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
         if item.endswith(JAVA_FILE_TYPE):
-            package_string = get_package_string(item_full_path)
+            package_string = get_import_string(item_full_path)
             dependencies.add(package_string)
 
         if os.path.isdir(item_full_path):
             find_import_strings(item_full_path, dependencies)
 
 
-def get_package_string(item_full_path):
+def get_import_string(item_full_path: str) -> str:
     package_index = item_full_path.find("java" + os.sep)
-    package_string = item_full_path[package_index + 5:-5]
-    package_string = package_string.replace(os.sep, ".")
-    return package_string
+    import_string = item_full_path[package_index + 5:-5]
+    import_string = import_string.replace(os.sep, ".")
+    return import_string
 
 
-def check_for_dependencies(item_full_path, dependencies):
+def check_for_dependencies(item_full_path: str, dependencies: set[str]):
     import_section_reached = False
 
     with open(item_full_path) as f:
@@ -58,16 +58,16 @@ def check_for_dependencies(item_full_path, dependencies):
 
             if line.find("import ") != -1:
                 import_section_reached = True
-                import_string = line[7: -2]
-                if import_string in dependencies:
-                    package_string = get_package_string(item_full_path)
-                    usages.setdefault(import_string, []).append(package_string)
+                imported_class = line[7: -2]
+                if imported_class in dependencies:
+                    current_location = get_import_string(item_full_path)
+                    usages.setdefault(imported_class, []).append(current_location)
             elif import_section_reached:
                 # Done with import section
                 break
 
 
-def search_target_repo(root_dir, dependencies):
+def search_target_repo(root_dir: str, dependencies: set[str]):
     root_dir = os.path.abspath(root_dir)
     print("Checking for dependencies in " + root_dir)
 
