@@ -9,10 +9,6 @@ from tkinter.filedialog import askdirectory
 
 JAVA_FILE_TYPE = os.extsep + "java"
 
-collected_dependencies = set()
-usages = dict()
-
-
 def find_label(root_directory: str) -> str:
     index = root_directory.find("src")
     if index != -1:
@@ -28,17 +24,17 @@ def find_label(root_directory: str) -> str:
         return label
 
 
-def find_import_strings(root_directory: str, dependencies: set[str]):
+def find_import_strings(root_directory: str, import_strings: set[str]):
     root_dir = os.path.abspath(root_directory)
 
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
         if item.endswith(JAVA_FILE_TYPE):
-            package_string = get_import_string(item_full_path)
-            dependencies.add(package_string)
+            import_string = get_import_string(item_full_path)
+            import_strings.add(import_string)
 
         if os.path.isdir(item_full_path):
-            find_import_strings(item_full_path, dependencies)
+            find_import_strings(item_full_path, import_strings)
 
 
 def get_import_string(item_full_path: str) -> str:
@@ -48,7 +44,7 @@ def get_import_string(item_full_path: str) -> str:
     return import_string
 
 
-def check_for_dependencies(item_full_path: str, dependencies: set[str]):
+def check_for_dependencies(item_full_path: str, import_strings: set[str], usages: dict[str, list[str]]):
     import_section_reached = False
 
     with open(item_full_path) as f:
@@ -59,7 +55,7 @@ def check_for_dependencies(item_full_path: str, dependencies: set[str]):
             if line.find("import ") != -1:
                 import_section_reached = True
                 imported_class = line[7: -2]
-                if imported_class in dependencies:
+                if imported_class in import_strings:
                     current_location = get_import_string(item_full_path)
                     usages.setdefault(imported_class, []).append(current_location)
             elif import_section_reached:
@@ -67,17 +63,17 @@ def check_for_dependencies(item_full_path: str, dependencies: set[str]):
                 break
 
 
-def search_target_repo(root_dir: str, dependencies: set[str]):
+def search_target_repo(root_dir: str, import_strings: set[str], usages: dict[str, list[str]]):
     root_dir = os.path.abspath(root_dir)
     print("Checking for dependencies in " + root_dir)
 
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
         if item.endswith(JAVA_FILE_TYPE):
-            check_for_dependencies(item_full_path, dependencies)
+            check_for_dependencies(item_full_path, import_strings, usages)
 
         if os.path.isdir(item_full_path):
-            search_target_repo(item_full_path, dependencies)
+            search_target_repo(item_full_path, import_strings, usages)
 
 
 def convert_found_data_to_csv(found_usages: dict[str, list[str]], source_label: str, target_label: str) -> list[
@@ -129,11 +125,14 @@ def main():
     source_label = find_label(source_root)
     target_label = find_label(target_root)
 
-    find_import_strings(source_root, collected_dependencies)
-    print(str(len(collected_dependencies)) + " possible dependencies found in source repository")
+    import_strings = set()
+    usages = dict()
+
+    find_import_strings(source_root, import_strings)
+    print(str(len(import_strings)) + " possible dependencies found in source repository")
 
     print("Starting to scan target repository for code from the source repository")
-    search_target_repo(target_root, collected_dependencies)
+    search_target_repo(target_root, import_strings, usages)
     print("Usages of " + str(len(usages.keys())) + " classes found")
 
     print("Converting found usages to CSV format")
