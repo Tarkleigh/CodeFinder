@@ -24,27 +24,27 @@ def find_label(root_directory: str) -> str:
         return label
 
 
-def find_import_strings(root_directory: str, import_strings: set[str]):
+def find_possible_dependencies(root_directory: str, possible_dependencies: set[str]):
     root_dir = os.path.abspath(root_directory)
 
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
         if item.endswith(JAVA_FILE_TYPE):
-            import_string = get_import_string(item_full_path)
-            import_strings.add(import_string)
+            fully_qualified_name = get_fully_qualified_name(item_full_path)
+            possible_dependencies.add(fully_qualified_name)
 
         if os.path.isdir(item_full_path):
-            find_import_strings(item_full_path, import_strings)
+            find_possible_dependencies(item_full_path, possible_dependencies)
 
 
-def get_import_string(item_full_path: str) -> str:
+def get_fully_qualified_name(item_full_path: str) -> str:
     package_index = item_full_path.find("java" + os.sep)
-    import_string = item_full_path[package_index + 5:-5]
-    import_string = import_string.replace(os.sep, ".")
-    return import_string
+    qualified_name = item_full_path[package_index + 5:-5]
+    qualified_name = qualified_name.replace(os.sep, ".")
+    return qualified_name
 
 
-def check_for_dependencies(item_full_path: str, import_strings: set[str], usages: dict[str, list[str]]):
+def find_usages(item_full_path: str, possible_dependencies: set[str], usages: dict[str, list[str]]):
     import_section_reached = False
 
     with open(item_full_path) as f:
@@ -55,25 +55,25 @@ def check_for_dependencies(item_full_path: str, import_strings: set[str], usages
             if line.find("import ") != -1:
                 import_section_reached = True
                 imported_class = line[7: -2]
-                if imported_class in import_strings:
-                    current_location = get_import_string(item_full_path)
+                if imported_class in possible_dependencies:
+                    current_location = get_fully_qualified_name(item_full_path)
                     usages.setdefault(imported_class, []).append(current_location)
             elif import_section_reached:
                 # Done with import section
                 break
 
 
-def search_target_repo(root_dir: str, import_strings: set[str], usages: dict[str, list[str]]):
+def search_target_repo(root_dir: str, possible_dependencies: set[str], usages: dict[str, list[str]]):
     root_dir = os.path.abspath(root_dir)
     print("Checking for dependencies in " + root_dir)
 
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
         if item.endswith(JAVA_FILE_TYPE):
-            check_for_dependencies(item_full_path, import_strings, usages)
+            find_usages(item_full_path, possible_dependencies, usages)
 
         if os.path.isdir(item_full_path):
-            search_target_repo(item_full_path, import_strings, usages)
+            search_target_repo(item_full_path, possible_dependencies, usages)
 
 
 def convert_found_data_to_csv(found_usages: dict[str, list[str]], source_label: str, target_label: str) -> list[
@@ -125,14 +125,14 @@ def main():
     source_label = find_label(source_root)
     target_label = find_label(target_root)
 
-    import_strings = set()
+    possible_dependencies = set()
     usages = dict()
 
-    find_import_strings(source_root, import_strings)
-    print(str(len(import_strings)) + " possible dependencies found in source repository")
+    find_possible_dependencies(source_root, possible_dependencies)
+    print(str(len(possible_dependencies)) + " possible dependencies found in source repository")
 
     print("Starting to scan target repository for code from the source repository")
-    search_target_repo(target_root, import_strings, usages)
+    search_target_repo(target_root, possible_dependencies, usages)
     print("Usages of " + str(len(usages.keys())) + " classes found")
 
     print("Converting found usages to CSV format")
