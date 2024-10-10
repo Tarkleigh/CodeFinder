@@ -39,6 +39,9 @@ def find_possible_dependencies(root_directory: str, possible_dependencies: set[s
 
 def get_fully_qualified_name(item_full_path: str) -> str:
     package_index = item_full_path.find("java" + os.sep)
+    if package_index == -1:
+        return item_full_path
+
     qualified_name = item_full_path[package_index + 5:-5]
     qualified_name = qualified_name.replace(os.sep, ".")
     return qualified_name
