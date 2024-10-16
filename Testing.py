@@ -90,5 +90,39 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(header_line[2], "Target Module")
         self.assertEqual(header_line[3], "Consuming Class")
 
+    def test_search_source_code_for_usages(self):
+        first_dependency = "tarkleigh.codefinder.Codefinder"
+        second_dependency = "tarkleigh.codefinder.DataFormatter"
+        file_full_path = "java" + os.sep + "tarkleigh" + os.sep + "coding" + os.sep + "cardgen" + os.sep + "CardGenerator.java"
+
+        possible_dependencies = set()
+        possible_dependencies.add(first_dependency)
+        possible_dependencies.add(second_dependency)
+
+        usages = dict()
+        usages[second_dependency] = ["tarkleigh.coding.cardgen.XMLParser"]
+
+        source_code = list()
+        source_code.append("package tarkleigh.coding.cardgen" + os.linesep)
+        source_code.append(os.linesep)
+        source_code.append("import java.util.List;" + os.linesep)
+        source_code.append("import " + first_dependency + ";" + os.linesep)
+        source_code.append("import " + second_dependency + ";" + os.linesep)
+        source_code.append(os.linesep)
+        source_code.append("class CardGenerator")
+
+        CodeFinder.search_source_code_for_usages(file_full_path, source_code, possible_dependencies, usages)
+        self.assertEqual(len(usages[first_dependency]), 1)
+        self.assertEqual(len(usages[second_dependency]), 2)
+
+        usage_first_dependency = usages[first_dependency][0]
+        self.assertEqual("tarkleigh.coding.cardgen.CardGenerator", usage_first_dependency)
+
+        first_usage_second_dependency = usages[second_dependency][0]
+        second_usage_second_dependency = usages[second_dependency][1]
+        self.assertEqual("tarkleigh.coding.cardgen.XMLParser", first_usage_second_dependency)
+        self.assertEqual("tarkleigh.coding.cardgen.CardGenerator", second_usage_second_dependency)
+
+
 if __name__ == '__main__':
     unittest.main()

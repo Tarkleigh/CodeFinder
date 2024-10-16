@@ -6,8 +6,10 @@ import tkinter
 
 from argparse import Namespace
 from tkinter.filedialog import askdirectory
+from typing import AnyStr
 
 JAVA_FILE_TYPE = os.extsep + "java"
+
 
 def find_label(root_directory: str) -> str:
     index = root_directory.find("src")
@@ -48,22 +50,27 @@ def get_fully_qualified_name(item_full_path: str) -> str:
 
 
 def find_usages(item_full_path: str, possible_dependencies: set[str], usages: dict[str, list[str]]):
-    import_section_reached = False
-
     with open(item_full_path) as f:
-        for line in f.readlines():
-            if line == '\n':
-                continue
+        source_code = f.readlines()
+        search_source_code_for_usages(item_full_path, source_code, possible_dependencies, usages)
 
-            if line.find("import ") != -1:
-                import_section_reached = True
-                imported_class = line[7: -2]
-                if imported_class in possible_dependencies:
-                    current_location = get_fully_qualified_name(item_full_path)
-                    usages.setdefault(imported_class, []).append(current_location)
-            elif import_section_reached:
-                # Done with import section
-                break
+
+def search_source_code_for_usages(item_full_path: str, source_code: list[AnyStr], possible_dependencies: set[str],
+                                  usages: dict[str, list[str]]):
+    import_section_reached = False
+    for line in source_code:
+        if line == '\n':
+            continue
+
+        if line.find("import ") != -1:
+            import_section_reached = True
+            imported_class = line[7: -2]
+            if imported_class in possible_dependencies:
+                current_location = get_fully_qualified_name(item_full_path)
+                usages.setdefault(imported_class, []).append(current_location)
+        elif import_section_reached:
+            # Done with import section, rest of the file can be ignored
+            break
 
 
 def search_target_repo(root_dir: str, possible_dependencies: set[str], usages: dict[str, list[str]]):
@@ -118,6 +125,7 @@ def get_command_line_arguments() -> Namespace:
     parser.add_argument("--source_root", required=False)
     parser.add_argument("--target_root", required=False)
     return parser.parse_args()
+
 
 def main():
     args = get_command_line_arguments()
