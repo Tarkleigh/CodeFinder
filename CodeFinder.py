@@ -59,12 +59,15 @@ def search_source_code_for_usages(item_full_path: str, source_code: list[AnyStr]
                                   usages: dict[str, list[str]]):
     import_section_reached = False
     for line in source_code:
-        if line == '\n':
+        if line == os.linesep:
             continue
 
         if line.find("import ") != -1:
             import_section_reached = True
-            imported_class = line[7: -2]
+            semicolon_index = line.find(";")
+
+            # Extract the class by removing the "import " string and the terminating semicolon and line ending character
+            imported_class = line[7: semicolon_index]
             if imported_class in possible_dependencies:
                 current_location = get_fully_qualified_name(item_full_path)
                 usages.setdefault(imported_class, []).append(current_location)
