@@ -32,11 +32,29 @@ def find_possible_dependencies(root_directory: str, possible_dependencies: set[s
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
         if item.endswith(JAVA_FILE_TYPE):
-            fully_qualified_name = get_fully_qualified_name(item_full_path)
+            file_ending_index = item.find(JAVA_FILE_TYPE)
+            class_name = item[:file_ending_index]
+            package_name = extract_package_name(item_full_path)
+            fully_qualified_name = package_name + "." + class_name
             possible_dependencies.add(fully_qualified_name)
 
         if os.path.isdir(item_full_path):
             find_possible_dependencies(item_full_path, possible_dependencies)
+
+
+def extract_package_name(item_full_path: str) -> str:
+    with open(item_full_path) as java_file:
+        for line in java_file:
+            package_index = line.find("package")
+            if package_index != -1:
+                line_without_package_keyword = line[len("package"):]
+                line_without_semi_colon = line_without_package_keyword.replace(";", "")
+                line_without_line_ending = line_without_semi_colon.replace(os.linesep, "")
+                package_name = line_without_line_ending.replace(" ", "")
+                return package_name
+
+        # Since every Java file has a package, we should never come here unless we open the wrong kind of file
+        return ""
 
 
 def get_fully_qualified_name(item_full_path: str) -> str:
