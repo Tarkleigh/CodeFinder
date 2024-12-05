@@ -32,8 +32,7 @@ def find_possible_dependencies(root_directory: str, possible_dependencies: set[s
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
         if item.endswith(JAVA_FILE_TYPE):
-            file_ending_index = item.find(JAVA_FILE_TYPE)
-            class_name = item[:file_ending_index]
+            class_name = extract_class_name(item)
             package_name = extract_package_name(item_full_path)
             fully_qualified_name = package_name + "." + class_name
             possible_dependencies.add(fully_qualified_name)
@@ -42,43 +41,53 @@ def find_possible_dependencies(root_directory: str, possible_dependencies: set[s
             find_possible_dependencies(item_full_path, possible_dependencies)
 
 
+def extract_class_name(item: str) -> str:
+    file_ending_index = item.find(JAVA_FILE_TYPE)
+    if file_ending_index == -1:
+        return item
+    else:
+        return item[:file_ending_index]
+
+
 def extract_package_name(item_full_path: str) -> str:
     with open(item_full_path) as java_file:
         for line in java_file:
             package_index = line.find("package")
             if package_index != -1:
-                line_without_package_keyword = line[len("package"):]
-                line_without_semi_colon = line_without_package_keyword.replace(";", "")
-                line_without_line_ending = line_without_semi_colon.replace(os.linesep, "")
-                package_name = line_without_line_ending.replace(" ", "")
+                package_name = search_line_for_package_name(line, package_index)
                 return package_name
 
         # Since every Java file has a package, we should never come here unless we open the wrong kind of file
         return ""
 
 
-def get_fully_qualified_name(item_full_path: str) -> str:
-    package_index = item_full_path.find("java" + os.sep)
-    if package_index == -1:
-        return item_full_path
-
-    qualified_name = item_full_path[package_index + 5:-5]
-    qualified_name = qualified_name.replace(os.sep, ".")
-    return qualified_name
-
-
-def find_usages(item_full_path: str, possible_dependencies: set[str], usages: dict[str, list[str]]):
-    with open(item_full_path) as f:
-        source_code = f.readlines()
-        search_source_code_for_usages(item_full_path, source_code, possible_dependencies, usages)
+def search_line_for_package_name(line: str, package_index: int) -> str:
+    # Ignore everything before package and the package keyword itself
+    start_index = package_index + len("package")
+    line_without_package_keyword = line[start_index:]
+    line_without_semi_colon = line_without_package_keyword.replace(";", "")
+    line_without_line_ending = line_without_semi_colon.replace(os.linesep, "")
+    package_name = line_without_line_ending.replace(" ", "")
+    return package_name
 
 
-def search_source_code_for_usages(item_full_path: str, source_code: list[AnyStr], possible_dependencies: set[str],
+def find_usages(item_full_path: str, item, possible_dependencies: set[str], usages: dict[str, list[str]]):
+    with open(item_full_path) as source_file:
+        source_code = source_file.readlines()
+        search_source_code_for_usages(item, source_code, possible_dependencies, usages)
+
+
+def search_source_code_for_usages(item: str, source_code: list[AnyStr], possible_dependencies: set[str],
                                   usages: dict[str, list[str]]):
     import_section_reached = False
+    package_name = ""
     for line in source_code:
         if line == os.linesep:
             continue
+
+        package_index = line.find("package")
+        if package_index != -1:
+            package_name = search_line_for_package_name(line, package_index)
 
         if line.find("import ") != -1:
             import_section_reached = True
@@ -87,8 +96,9 @@ def search_source_code_for_usages(item_full_path: str, source_code: list[AnyStr]
             # Extract the class by removing the "import " string and the terminating semicolon and line ending character
             imported_class = line[7: semicolon_index]
             if imported_class in possible_dependencies:
-                current_location = get_fully_qualified_name(item_full_path)
-                usages.setdefault(imported_class, []).append(current_location)
+                class_name = extract_class_name(item)
+                consuming_class = package_name + "." + class_name
+                usages.setdefault(imported_class, []).append(consuming_class)
         elif import_section_reached:
             # Done with import section, rest of the file can be ignored
             break
@@ -96,12 +106,12 @@ def search_source_code_for_usages(item_full_path: str, source_code: list[AnyStr]
 
 def search_target_repo(root_dir: str, possible_dependencies: set[str], usages: dict[str, list[str]]):
     root_dir = os.path.abspath(root_dir)
-    print("Checking for dependencies in " + root_dir)
+    print("Checking for usages in " + root_dir)
 
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
         if item.endswith(JAVA_FILE_TYPE):
-            find_usages(item_full_path, possible_dependencies, usages)
+            find_usages(item_full_path, item, possible_dependencies, usages)
 
         if os.path.isdir(item_full_path):
             search_target_repo(item_full_path, possible_dependencies, usages)

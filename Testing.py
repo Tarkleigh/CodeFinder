@@ -21,19 +21,6 @@ class ParserTests(unittest.TestCase):
         label = CodeFinder.find_label(test_directory_path)
         self.assertEqual("finder", label)
 
-    def test_get_fully_qualified_name(self):
-        expected_name = "org.tarkleigh.Finder"
-        current_path = ("home" + os.sep + "user" + os.sep + "development" + os.sep + "codefinder" + os.sep
-                        + "main" + os.sep + "src" + os.sep + "java" + os.sep + "org" + os.sep + "tarkleigh" + os.sep + "Finder.java")
-        qualified_name = CodeFinder.get_fully_qualified_name(current_path)
-        self.assertEqual(expected_name, qualified_name)
-
-    def test_get_fully_qualified_name_without_package_marker(self):
-        current_path = ("home" + os.sep + "user" + os.sep + "development" + os.sep + "codefinder" + os.sep
-                        + "main" + os.sep + "src" + os.sep + "org" + os.sep + "tarkleigh" + os.sep + "Finder.java")
-        qualified_name = CodeFinder.get_fully_qualified_name(current_path)
-        self.assertEqual(current_path, qualified_name)
-
     def test_convert_found_data_to_csv(self):
         data_to_concert = dict()
         source_label = "Cardgen"
@@ -93,7 +80,7 @@ class ParserTests(unittest.TestCase):
     def test_search_source_code_for_usages(self):
         first_dependency = "tarkleigh.codefinder.Codefinder"
         second_dependency = "tarkleigh.codefinder.DataFormatter"
-        file_full_path = "java" + os.sep + "tarkleigh" + os.sep + "coding" + os.sep + "cardgen" + os.sep + "CardGenerator.java"
+        file = "CardGenerator" + os.extsep + "java"
 
         possible_dependencies = set()
         possible_dependencies.add(first_dependency)
@@ -111,7 +98,7 @@ class ParserTests(unittest.TestCase):
         source_code.append(os.linesep)
         source_code.append("class CardGenerator")
 
-        CodeFinder.search_source_code_for_usages(file_full_path, source_code, possible_dependencies, usages)
+        CodeFinder.search_source_code_for_usages(file, source_code, possible_dependencies, usages)
         self.assertEqual(len(usages[first_dependency]), 1)
         self.assertEqual(len(usages[second_dependency]), 2)
 
@@ -122,6 +109,22 @@ class ParserTests(unittest.TestCase):
         second_usage_second_dependency = usages[second_dependency][1]
         self.assertEqual("tarkleigh.coding.cardgen.XMLParser", first_usage_second_dependency)
         self.assertEqual("tarkleigh.coding.cardgen.CardGenerator", second_usage_second_dependency)
+
+    def test_extract_class_name(self):
+        test_file_name = "CardGenerator" + os.extsep + "java"
+        label = CodeFinder.extract_class_name(test_file_name)
+        self.assertEqual("CardGenerator", label)
+
+    def test_extract_class_name_with_wrong_file_type(self):
+        test_file_name = "CardGenerator" + os.extsep + "py"
+        label = CodeFinder.extract_class_name(test_file_name)
+        self.assertEqual(test_file_name, label)
+
+    def test_search_line_for_package_name(self):
+        # Using a somewhat usual formatting to test all cases
+        test_line = "  package" + " org.tarkleigh.foundation" + " ;"
+        package_name = CodeFinder.search_line_for_package_name(test_line, 2)
+        self.assertEqual("org.tarkleigh.foundation", package_name)
 
 
 if __name__ == '__main__':
