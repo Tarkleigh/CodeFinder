@@ -3,6 +3,7 @@ import csv
 import subprocess
 import argparse
 import tkinter
+import sys
 
 from argparse import Namespace
 from tkinter.filedialog import askdirectory
@@ -144,7 +145,9 @@ def create_and_open_csv_file(data: list[list[str]]):
 def get_root_directory(directory_from_command_line: str, dialogue_title: str) -> str:
     if directory_from_command_line is None:
         tkinter.Tk().withdraw()  # we don't want a full GUI, so keep the root window from appearing
-        return askdirectory(title=dialogue_title)  # show an "Open" dialog box and return the path to the selected file
+        tkinter.messagebox.showinfo(dialogue_title, dialogue_title)
+        root_directory = askdirectory(title=dialogue_title)
+        return root_directory
     else:
         return directory_from_command_line
 
@@ -155,14 +158,23 @@ def get_command_line_arguments() -> Namespace:
         description='Finds the usages of code from the source repo in the target repo')
     parser.add_argument("--source_root", required=False)
     parser.add_argument("--target_root", required=False)
+    parser.add_argument("--skip_confirm", required=False)
     return parser.parse_args()
 
 
 def main():
     args = get_command_line_arguments()
 
-    source_root = get_root_directory(args.source_root, "Select source repository")
-    target_root = get_root_directory(args.target_root, "Select target repository")
+    source_root = get_root_directory(args.source_root, "Please select source root directory")
+    target_root = get_root_directory(args.target_root, "Please select target root directory")
+
+    if args.skip_confirm is None:
+        tkinter.Tk().withdraw()  # we don't want a full GUI, so keep the root window from appearing
+        confirm_message = ("Source Root set to " + source_root + os.linesep + "---" + os.linesep +
+                           "Target Root set to " + target_root + os.linesep + "---" + os.linesep + "Continue?")
+        result = tkinter.messagebox.askokcancel("Confirm", confirm_message)
+        if result is False:
+            sys.exit("Search cancelled")
 
     source_label = find_label(source_root)
     target_label = find_label(target_root)
