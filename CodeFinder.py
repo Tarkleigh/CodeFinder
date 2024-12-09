@@ -142,14 +142,14 @@ def create_and_open_csv_file(data: list[list[str]]):
     subprocess.call(["open", csv_file_path])
 
 
-def get_root_directory(directory_from_command_line: str, dialogue_title: str) -> str:
+def get_root_directory(directory_from_command_line: str, dialogue_title: str) -> (str, bool):
     if directory_from_command_line is None:
         tkinter.Tk().withdraw()  # we don't want a full GUI, so keep the root window from appearing
         tkinter.messagebox.showinfo(dialogue_title, dialogue_title)
         root_directory = askdirectory(title=dialogue_title)
-        return root_directory
+        return root_directory, True
     else:
-        return directory_from_command_line
+        return directory_from_command_line, False
 
 
 def get_command_line_arguments() -> Namespace:
@@ -165,11 +165,11 @@ def get_command_line_arguments() -> Namespace:
 def main():
     args = get_command_line_arguments()
 
-    source_root = get_root_directory(args.source_root, "Please select source root directory")
-    target_root = get_root_directory(args.target_root, "Please select target root directory")
+    source_root, source_from_dialogue = get_root_directory(args.source_root, "Please select source root directory")
+    target_root, target_from_dialogue = get_root_directory(args.target_root, "Please select target root directory")
 
-    if args.skip_confirm is None:
-        tkinter.Tk().withdraw()  # we don't want a full GUI, so keep the root window from appearing
+    # Root directories were chosen via Tkinter dialogue. This can be confusing, so we should let the user confirm
+    if source_from_dialogue or target_from_dialogue:
         confirm_message = ("Source Root set to " + source_root + os.linesep + "---" + os.linesep +
                            "Target Root set to " + target_root + os.linesep + "---" + os.linesep + "Continue?")
         result = tkinter.messagebox.askokcancel("Confirm", confirm_message)
