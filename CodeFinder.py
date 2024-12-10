@@ -51,7 +51,7 @@ def extract_class_name(item: str) -> str:
 
 
 def extract_package_name(item_full_path: str) -> str:
-    with open(item_full_path) as java_file:
+    with open(item_full_path, encoding='utf-8') as java_file:
         for line in java_file:
             package_index = line.find("package")
             if package_index != -1:
@@ -73,7 +73,7 @@ def search_line_for_package_name(line: str, package_index: int) -> str:
 
 
 def find_usages(item_full_path: str, item, possible_dependencies: set[str], usages: dict[str, list[str]]):
-    with open(item_full_path) as source_file:
+    with open(item_full_path, encoding='utf-8') as source_file:
         source_code = source_file.readlines()
         search_source_code_for_usages(item, source_code, possible_dependencies, usages)
 
@@ -139,7 +139,13 @@ def create_and_open_csv_file(data: list[list[str]]):
         writer = csv.writer(file)
         # Write data to the CSV file
         writer.writerows(data)
-    subprocess.call(["open", csv_file_path])
+
+    if sys.platform == "win32":
+        os.startfile(csv_file_path)
+    elif sys.platform == "darwin":  # mac
+        subprocess.call(["open", csv_file_path])
+    else:  # linux
+        subprocess.call(["xdg-open", csv_file_path])
 
 
 def get_root_directory(directory_from_command_line: str, dialogue_title: str) -> (str, bool):
