@@ -134,7 +134,7 @@ def create_and_open_csv_file(data: list[list[str]]):
     # File path for the CSV file
     csv_file_path = 'dependency_usages.csv'
     # Open the file in write mode
-    with open(csv_file_path, 'w') as file:
+    with open(csv_file_path, 'w', newline='') as file:
         # Create a csv.writer object
         writer = csv.writer(file)
         # Write data to the CSV file
