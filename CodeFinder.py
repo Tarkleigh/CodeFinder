@@ -67,7 +67,7 @@ def search_line_for_package_name(line: str, package_index: int) -> str:
     start_index = package_index + len("package")
     line_without_package_keyword = line[start_index:]
     line_without_semi_colon = line_without_package_keyword.replace(";", "")
-    line_without_line_ending = line_without_semi_colon.replace(os.linesep, "")
+    line_without_line_ending = line_without_semi_colon.rstrip('\r\n')
     package_name = line_without_line_ending.replace(" ", "")
     return package_name
 
@@ -83,7 +83,7 @@ def search_source_code_for_usages(item: str, source_code: list[AnyStr], possible
     import_section_reached = False
     package_name = ""
     for line in source_code:
-        if line == os.linesep:
+        if line.strip() == "":
             continue
 
         package_index = line.find("package")
