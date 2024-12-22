@@ -35,8 +35,10 @@ def find_possible_dependencies(root_directory: str, possible_dependencies: set[s
         if item.endswith(JAVA_FILE_TYPE):
             class_name = extract_class_name(item)
             package_name = extract_package_name(item_full_path)
-            fully_qualified_name = package_name + "." + class_name
-            possible_dependencies.add(fully_qualified_name)
+            # Empty package names are not valid Java imports
+            if package_name != "":
+                fully_qualified_name = package_name + "." + class_name
+                possible_dependencies.add(fully_qualified_name)
 
         if os.path.isdir(item_full_path):
             find_possible_dependencies(item_full_path, possible_dependencies)
@@ -51,14 +53,20 @@ def extract_class_name(item: str) -> str:
 
 
 def extract_package_name(item_full_path: str) -> str:
-    with open(item_full_path, encoding='utf-8') as java_file:
-        for line in java_file:
-            package_index = line.find("package")
-            if package_index != -1:
-                package_name = search_line_for_package_name(line, package_index)
-                return package_name
+    try:
+        with open(item_full_path, encoding='utf-8') as java_file:
+            for line in java_file:
+                package_index = line.find("package")
+                if package_index != -1:
+                    package_name = search_line_for_package_name(line, package_index)
+                    return package_name
 
         # Since every Java file has a package, we should never come here unless we open the wrong kind of file
+        return ""
+
+    # Files that don't use UTF-8 will throw exceptions during opening, we will catch these and skip the file in question
+    except UnicodeDecodeError:
+        print("Decoding error, skipping file " + item_full_path)
         return ""
 
 
@@ -73,10 +81,14 @@ def search_line_for_package_name(line: str, package_index: int) -> str:
 
 
 def find_usages(item_full_path: str, item, possible_dependencies: set[str], usages: dict[str, list[str]]):
-    with open(item_full_path, encoding='utf-8') as source_file:
-        source_code = source_file.readlines()
-        search_source_code_for_usages(item, source_code, possible_dependencies, usages)
+    try:
+        with open(item_full_path, encoding='utf-8') as source_file:
+            source_code = source_file.readlines()
+            search_source_code_for_usages(item, source_code, possible_dependencies, usages)
 
+    # Files that don't use UTF-8 will throw exceptions during opening, we will catch these and skip the file in question
+    except UnicodeDecodeError:
+        print("Decoding error, skipping file " + item_full_path)
 
 def search_source_code_for_usages(item: str, source_code: list[AnyStr], possible_dependencies: set[str],
                                   usages: dict[str, list[str]]):
