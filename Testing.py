@@ -7,7 +7,7 @@ class ParserTests(unittest.TestCase):
     """Test class for CodeFinder.py."""
 
     def test_find_label_with_src_folder(self):
-        test_directory_path = "finder" + os.sep + "src"
+        test_directory_path = "finder" + os.sep + "src" + os.sep + "java"
         label = CodeFinder.find_label(test_directory_path)
         self.assertEqual("finder", label)
 
@@ -20,6 +20,16 @@ class ParserTests(unittest.TestCase):
         test_directory_path = "finder"
         label = CodeFinder.find_label(test_directory_path)
         self.assertEqual("finder", label)
+
+    def test_find_label_without_folder_above_src(self):
+        test_directory_path = "src" + os.sep + "java"
+        label = CodeFinder.find_label(test_directory_path)
+        self.assertEqual("src", label)
+
+    def test_find_label_without_folder_above_src_and_no_sub_directory(self):
+        test_directory_path = "src"
+        label = CodeFinder.find_label(test_directory_path)
+        self.assertEqual("src", label)
 
     def test_convert_found_data_to_csv(self):
         data_to_concert = dict()
@@ -124,6 +134,18 @@ class ParserTests(unittest.TestCase):
         # Using a somewhat usual formatting to test all cases
         test_line = "  package" + " org.tarkleigh.foundation" + " ;"
         package_name = CodeFinder.search_line_for_package_name(test_line, 2)
+        self.assertEqual("org.tarkleigh.foundation", package_name)
+
+    def test_search_line_unix_line_ending_handling(self):
+        # Using a somewhat usual formatting to test all cases
+        test_line = "package" + "org.tarkleigh.foundation" + ";\r"
+        package_name = CodeFinder.search_line_for_package_name(test_line, 0)
+        self.assertEqual("org.tarkleigh.foundation", package_name)
+
+    def test_search_line_windows_line_ending_handling(self):
+        # Using a somewhat usual formatting to test all cases
+        test_line = "package" + "org.tarkleigh.foundation" + ";\r\n"
+        package_name = CodeFinder.search_line_for_package_name(test_line, 0)
         self.assertEqual("org.tarkleigh.foundation", package_name)
 
 
