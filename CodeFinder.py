@@ -137,7 +137,7 @@ def search_target_directory(root_dir: str, possible_dependencies: set[str], usag
 
 def convert_found_data_to_csv(found_usages: dict[str, list[str]], source_label: str, target_label: str) -> list[
     list[str]]:
-    data = [["Source Module", "Used Class", "Target Module", "Consuming Class"]]
+    data = [["Source Root", "Used Class", "Target Root", "Consuming Class"]]
     for key in found_usages.keys():
         usages_of_key = found_usages[key]
         for usage in usages_of_key:

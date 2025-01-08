@@ -82,9 +82,9 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(1, len(converted_data))
 
         header_line = converted_data[0]
-        self.assertEqual(header_line[0], "Source Module")
+        self.assertEqual(header_line[0], "Source Root")
         self.assertEqual(header_line[1], "Used Class")
-        self.assertEqual(header_line[2], "Target Module")
+        self.assertEqual(header_line[2], "Target Root")
         self.assertEqual(header_line[3], "Consuming Class")
 
     def test_search_source_code_for_usages(self):
