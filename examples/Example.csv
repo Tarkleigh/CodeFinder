@@ -1,0 +1,11 @@
+Source Root,Used Class,Target Root,Consuming Class
+Tesseract-Core,org.tesseract.calculation.MultiObjectCalculation,Magnetar,org.magnetar.main.RunMultiUserCalculation
+Tesseract-Core,org.tesseract.calculation.MultiObjectCalculation,Magnetar,org.magnetar.main.RunUserCalculation
+Tesseract-Core,org.tesseract.calculation.MultiObjectCalculation,Magnetar,org.magnetar.backup.RestoreDataFromCSV
+Tesseract-Core,org.tesseract.calculation.MultiObjectCalculation,Magnetar,org.magnetar.backup.RestoreDataFromJSON
+Tesseract-Core,org.tesseract.calculation.SimpleCalculation,Magnetar,org.magnetar.main.CalculationCache
+Tesseract-Core,org.tesseract.calculation.SimpleCalculation,Magnetar,org.magnetar.main.RunUserCalculation
+Tesseract-Core,org.tesseract.calculation.CalculationConfig,Magnetar,org.magnetar.main.RunUserCalculation
+Tesseract-Core,org.tesseract.eventing.EventQueue,Magnetar,org.magnetar.events.ProcessPaymentEvent
+Tesseract-Core,org.tesseract.eventing.ConsistencySettings,Magnetar,org.magnetar.events.EventHandler
+Tesseract-Core,org.tesseract.rendering.PipelineSettings,Magnetar,org.magnetar.ui.ThemeManager
