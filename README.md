@@ -30,7 +30,14 @@ files)
 ## What does the output look like?
 
 The output will be a csv file called "dependency_usages.csv" with the columns "Source Module,Used Class,Target
-Module,Consuming Class"
+Module,Consuming Class".
+
+For example, here are the usages of the hypothetical Tesseract Engine in the also fictional project Magnetar:
+
+![](https://github.com/Tarkleigh/CodeFinder/blob/main/examples/Example.png)
+
+This screenshot is from Apple's Numbers tool, please use the raw csv file in the example folder to see the output in
+your tool of choice.
 
 ## What counts as a usage?
 
