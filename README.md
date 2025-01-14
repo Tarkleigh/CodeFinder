@@ -36,7 +36,7 @@ For example, here are the usages of the hypothetical Tesseract Engine in the als
 
 ![](https://github.com/Tarkleigh/CodeFinder/blob/main/examples/Example.png)
 
-This screenshot is from Apple's Numbers tool, please use the raw csv file in the example folder to see the output in
+This screenshot is from Apple's Numbers tool, please use the raw csv file in the "examples" folder to see the output in
 your tool of choice.
 
 ## What counts as a usage?
