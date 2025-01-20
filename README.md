@@ -12,7 +12,7 @@ Naturally, this can also be used without Git as the input are just paths to dire
 
 ## How to use:
 
-First, check out the two Git repositories you want to inspect. Once this is done, run **CodeFinder.py** and pass the
+First, check out the two Git repositories you want to inspect. Once this is done, run **code_finder.py** and pass the
 fully-qualified path to the source and target folders (for example your repositories). This can be done by either:
 
 - Using the --source_root and --target_root parameters on the command line or when running the script in an IDE

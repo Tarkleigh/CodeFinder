@@ -1,40 +1,40 @@
 import os
 import unittest
-import CodeFinder
+import code_finder
 
 
 class ParserTests(unittest.TestCase):
-    """Test class for CodeFinder.py."""
+    """Test class for code_finder.py."""
 
     def test_find_label_with_src_folder(self):
         test_directory_path = "finder" + os.sep + "src" + os.sep + "java"
-        label = CodeFinder.find_label(test_directory_path)
+        label = code_finder.find_label(test_directory_path)
         self.assertEqual("finder", label)
 
     def test_find_label_without_src_folder(self):
         test_directory_path = "finder" + os.sep + "main" + os.sep + "java"
-        label = CodeFinder.find_label(test_directory_path)
+        label = code_finder.find_label(test_directory_path)
         self.assertEqual("java", label)
 
     def test_find_label_without_separator(self):
         test_directory_path = "finder"
-        label = CodeFinder.find_label(test_directory_path)
+        label = code_finder.find_label(test_directory_path)
         self.assertEqual("finder", label)
 
     def test_find_label_without_folder_above_src(self):
         test_directory_path = "src" + os.sep + "java"
-        label = CodeFinder.find_label(test_directory_path)
+        label = code_finder.find_label(test_directory_path)
         self.assertEqual("src", label)
 
     def test_find_label_without_folder_above_src_and_no_sub_directory(self):
         test_directory_path = "src"
-        label = CodeFinder.find_label(test_directory_path)
+        label = code_finder.find_label(test_directory_path)
         self.assertEqual("src", label)
 
     def test_convert_found_data_to_csv(self):
         data_to_concert = dict()
         source_label = "Cardgen"
-        target_label = "Codefinder"
+        target_label = "code_finder"
 
         first_dependency = "XMLParser"
         second_dependency = "CardGen"
@@ -46,7 +46,7 @@ class ParserTests(unittest.TestCase):
         data_to_concert[first_dependency] = [first_usage, second_usage]
         data_to_concert[second_dependency] = [third_usage]
 
-        converted_data = CodeFinder.convert_found_data_to_csv(data_to_concert, source_label, target_label)
+        converted_data = code_finder.convert_found_data_to_csv(data_to_concert, source_label, target_label)
 
         self.assertEqual(4, len(converted_data))
 
@@ -75,9 +75,9 @@ class ParserTests(unittest.TestCase):
         data_to_concert = dict()
 
         source_label = "Cardgen"
-        target_label = "Codefinder"
+        target_label = "code_finder"
 
-        converted_data = CodeFinder.convert_found_data_to_csv(data_to_concert, source_label, target_label)
+        converted_data = code_finder.convert_found_data_to_csv(data_to_concert, source_label, target_label)
 
         self.assertEqual(1, len(converted_data))
 
@@ -88,8 +88,8 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(header_line[3], "Consuming Class")
 
     def test_search_source_code_for_usages(self):
-        first_dependency = "tarkleigh.codefinder.Codefinder"
-        second_dependency = "tarkleigh.codefinder.DataFormatter"
+        first_dependency = "tarkleigh.code_finder.code_finder"
+        second_dependency = "tarkleigh.code_finder.DataFormatter"
         file = "CardGenerator" + os.extsep + "java"
 
         possible_dependencies = set()
@@ -108,7 +108,7 @@ class ParserTests(unittest.TestCase):
         source_code.append(os.linesep)
         source_code.append("class CardGenerator")
 
-        CodeFinder.search_source_code_for_usages(file, source_code, possible_dependencies, usages)
+        code_finder.search_source_code_for_usages(file, source_code, possible_dependencies, usages)
         self.assertEqual(len(usages[first_dependency]), 1)
         self.assertEqual(len(usages[second_dependency]), 2)
 
@@ -122,30 +122,30 @@ class ParserTests(unittest.TestCase):
 
     def test_extract_class_name(self):
         test_file_name = "CardGenerator" + os.extsep + "java"
-        label = CodeFinder.extract_class_name(test_file_name)
+        label = code_finder.extract_class_name(test_file_name)
         self.assertEqual("CardGenerator", label)
 
     def test_extract_class_name_with_wrong_file_type(self):
         test_file_name = "CardGenerator" + os.extsep + "py"
-        label = CodeFinder.extract_class_name(test_file_name)
+        label = code_finder.extract_class_name(test_file_name)
         self.assertEqual(test_file_name, label)
 
     def test_search_line_for_package_name(self):
         # Using a somewhat usual formatting to test all cases
         test_line = "  package" + " org.tarkleigh.foundation" + " ;"
-        package_name = CodeFinder.search_line_for_package_name(test_line, 2)
+        package_name = code_finder.search_line_for_package_name(test_line, 2)
         self.assertEqual("org.tarkleigh.foundation", package_name)
 
     def test_search_line_unix_line_ending_handling(self):
         # Using a somewhat usual formatting to test all cases
         test_line = "package" + "org.tarkleigh.foundation" + ";\r"
-        package_name = CodeFinder.search_line_for_package_name(test_line, 0)
+        package_name = code_finder.search_line_for_package_name(test_line, 0)
         self.assertEqual("org.tarkleigh.foundation", package_name)
 
     def test_search_line_windows_line_ending_handling(self):
         # Using a somewhat usual formatting to test all cases
         test_line = "package" + "org.tarkleigh.foundation" + ";\r\n"
-        package_name = CodeFinder.search_line_for_package_name(test_line, 0)
+        package_name = code_finder.search_line_for_package_name(test_line, 0)
         self.assertEqual("org.tarkleigh.foundation", package_name)
 
 

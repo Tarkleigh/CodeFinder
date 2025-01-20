@@ -39,7 +39,8 @@ def find_possible_dependencies(root_directory: str, possible_dependencies: set[s
         if item.endswith(JAVA_FILE_TYPE):
             class_name = extract_class_name(item)
             package_name = extract_package_name(item_full_path)
-            # Classes without a package name cannot be imported, so we ignore them when gathering possible dependencies
+            # Classes without a package name cannot be imported, so we ignore them when gathering
+            # possible dependencies
             if package_name != "":
                 dependency_name = package_name + "." + class_name
                 possible_dependencies.add(dependency_name)
@@ -65,10 +66,12 @@ def extract_package_name(item_full_path: str) -> str:
                     package_name = search_line_for_package_name(line, package_index)
                     return package_name
 
-        # Since every Java file has a package, we should never come here unless we open the wrong kind of file
+        # Since every Java file has a package, we should never come here unless we open the wrong
+        # kind of file
         return ""
 
-    # Files that don't use UTF-8 will throw exceptions when opened, we will catch these and skip the file in question
+    # Files that don't use UTF-8 will throw exceptions when opened, we will catch these and skip
+    # the file in question
     except UnicodeDecodeError:
         print("Decoding error, skipping file " + item_full_path)
         return ""
@@ -84,18 +87,21 @@ def search_line_for_package_name(line: str, package_index: int) -> str:
     return package_name
 
 
-def find_code_usages(item_full_path: str, item, possible_dependencies: set[str], usages: dict[str, list[str]]):
+def find_code_usages(item_full_path: str, item, possible_dependencies: set[str],
+                     usages: dict[str, list[str]]):
     try:
         with open(item_full_path, encoding='utf-8') as source_file:
             source_code = source_file.readlines()
             search_source_code_for_usages(item, source_code, possible_dependencies, usages)
 
-    # Files that don't use UTF-8 will throw exceptions when opened, we will catch these and skip the file in question
+    # Files that don't use UTF-8 will throw exceptions when opened, we will catch these and skip
+    # the file in question
     except UnicodeDecodeError:
         print("Decoding error, skipping file " + item_full_path)
 
 
-def search_source_code_for_usages(item: str, source_code: list[AnyStr], possible_dependencies: set[str],
+def search_source_code_for_usages(item: str, source_code: list[AnyStr],
+                                  possible_dependencies: set[str],
                                   usages: dict[str, list[str]]):
     import_section_reached = False
     package_name = ""
@@ -111,7 +117,7 @@ def search_source_code_for_usages(item: str, source_code: list[AnyStr], possible
             import_section_reached = True
             semicolon_index = line.find(";")
 
-            # Extract the class by removing the "import " string and the terminating semicolon and line ending character
+            # Extract the class by removing the "import " string and everything after the semicolon
             imported_class = line[7: semicolon_index]
             if imported_class in possible_dependencies:
                 class_name = extract_class_name(item)
@@ -122,7 +128,8 @@ def search_source_code_for_usages(item: str, source_code: list[AnyStr], possible
             break
 
 
-def search_target_directory(root_dir: str, possible_dependencies: set[str], usages: dict[str, list[str]]):
+def search_target_directory(root_dir: str, possible_dependencies: set[str],
+                            usages: dict[str, list[str]]):
     root_dir = os.path.abspath(root_dir)
     print("Checking for usages in " + root_dir)
 
@@ -135,7 +142,8 @@ def search_target_directory(root_dir: str, possible_dependencies: set[str], usag
             search_target_directory(item_full_path, possible_dependencies, usages)
 
 
-def convert_found_data_to_csv(found_usages: dict[str, list[str]], source_label: str, target_label: str) -> list[
+def convert_found_data_to_csv(found_usages: dict[str, list[str]], source_label: str,
+                              target_label: str) -> list[
     list[str]]:
     data = [["Source Root", "Used Class", "Target Root", "Consuming Class"]]
     for key in found_usages.keys():
@@ -153,7 +161,8 @@ def create_and_open_csv_file(data: list[list[str]]):
         writer = csv.writer(file)
         writer.writerows(data)
 
-    # Open the newly created file with the default application, the way to do this depends on the operating system
+    # Open the newly created file with the default application, the way to do this depends on the
+    # operating system
     if sys.platform == "win32":
         os.startfile(csv_file_path)
     elif sys.platform == "darwin":
@@ -164,7 +173,8 @@ def create_and_open_csv_file(data: list[list[str]]):
 
 def get_root_directory(directory_from_command_line: str, dialogue_title: str) -> (str, bool):
     if directory_from_command_line is None:
-        tkinter.Tk().withdraw()  # we don't want a full GUI, this line keeps the root window from appearing
+        # we don't want a full GUI, this line keeps the root window from appearing
+        tkinter.Tk().withdraw()
         tkinter.messagebox.showinfo(dialogue_title, dialogue_title)
         root_directory = askdirectory(title=dialogue_title)
         return root_directory, True
@@ -185,13 +195,16 @@ def get_command_line_arguments() -> Namespace:
 def main():
     args = get_command_line_arguments()
 
-    source_root, source_from_dialogue = get_root_directory(args.source_root, "Please select source root directory")
-    target_root, target_from_dialogue = get_root_directory(args.target_root, "Please select target root directory")
+    source_root, source_from_dialogue = get_root_directory(args.source_root,
+                                                           "Please select source root directory")
+    target_root, target_from_dialogue = get_root_directory(args.target_root,
+                                                           "Please select target root directory")
 
-    # Root directories were chosen via Tkinter dialogue. This can be confusing, so we let the user confirm
+    # Root directories were chosen via dialogue. This can be confusing, so we let the user confirm
     if source_from_dialogue or target_from_dialogue:
         confirm_message = ("Source Root set to " + source_root + os.linesep + "---" + os.linesep +
-                           "Target Root set to " + target_root + os.linesep + "---" + os.linesep + "Continue?")
+                           "Target Root set to " + target_root + os.linesep + "---" + os.linesep +
+                           "Continue?")
         result = tkinter.messagebox.askokcancel("Confirm", confirm_message)
         if result is False:
             sys.exit("Search cancelled")
