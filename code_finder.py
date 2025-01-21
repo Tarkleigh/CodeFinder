@@ -157,7 +157,7 @@ def convert_found_data_to_csv(found_usages: dict[str, list[str]], source_label: 
 
 def create_and_open_csv_file(data: list[list[str]]):
     csv_file_path = 'dependency_usages.csv'
-    with open(csv_file_path, 'w', newline='') as file:
+    with open(csv_file_path, 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerows(data)
 
@@ -213,7 +213,7 @@ def main():
     target_label = find_label(target_root)
 
     possible_dependencies = set()
-    usages = dict()
+    usages = {}
 
     find_possible_dependencies(source_root, possible_dependencies)
     print(str(len(possible_dependencies)) + " possible dependencies found in source directory")
