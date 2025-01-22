@@ -87,7 +87,7 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(header_line[2], "Target Root")
         self.assertEqual(header_line[3], "Consuming Class")
 
-    def test_search_source_code_for_usages(self):
+    def test_search_source_code_for_dependency_usages(self):
         first_dependency = "tarkleigh.code_finder.code_finder"
         second_dependency = "tarkleigh.code_finder.DataFormatter"
         file = "CardGenerator" + os.extsep + "java"
@@ -108,7 +108,8 @@ class ParserTests(unittest.TestCase):
         source_code.append(os.linesep)
         source_code.append("class CardGenerator")
 
-        code_finder.search_source_code_for_usages(file, source_code, possible_dependencies, usages)
+        code_finder.search_source_code_for_dependency_usages(file, source_code,
+                                                             possible_dependencies, usages)
         self.assertEqual(len(usages[first_dependency]), 1)
         self.assertEqual(len(usages[second_dependency]), 2)
 

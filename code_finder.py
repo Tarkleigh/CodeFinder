@@ -1,3 +1,5 @@
+"""Tool to find usages of Java coding from one root folder in another root folder. The script
+searches the given folders and exports the findings into a CSV file for inspection"""
 import os
 import csv
 import subprocess
@@ -13,6 +15,7 @@ JAVA_FILE_TYPE = os.extsep + "java"
 
 
 def find_label(root_directory: str) -> str:
+    """Determine which label to use for coding from the given root directory"""
     index = root_directory.find("src")
     if index != -1:
         if index == 0:
@@ -32,6 +35,7 @@ def find_label(root_directory: str) -> str:
 
 
 def find_possible_dependencies(root_directory: str, possible_dependencies: set[str]):
+    """Recursively go through the directory and collect all Java files that could be imported"""
     directory_path = os.path.abspath(root_directory)
 
     for item in os.listdir(directory_path):
@@ -50,6 +54,7 @@ def find_possible_dependencies(root_directory: str, possible_dependencies: set[s
 
 
 def extract_class_name(item: str) -> str:
+    """Extract the class name from Java file name"""
     file_ending_index = item.find(JAVA_FILE_TYPE)
     if file_ending_index == -1:
         return item
@@ -58,6 +63,7 @@ def extract_class_name(item: str) -> str:
 
 
 def extract_package_name(item_full_path: str) -> str:
+    """Search the source code in the file for the Java package and return it"""
     try:
         with open(item_full_path, encoding='utf-8') as java_file:
             for line in java_file:
@@ -78,6 +84,7 @@ def extract_package_name(item_full_path: str) -> str:
 
 
 def search_line_for_package_name(line: str, package_index: int) -> str:
+    """Search a singe line of the source code for the Java package and return it"""
     # Ignore everything before package and the package keyword itself
     start_index = package_index + len("package")
     line_without_package_keyword = line[start_index:]
@@ -87,12 +94,14 @@ def search_line_for_package_name(line: str, package_index: int) -> str:
     return package_name
 
 
-def find_code_usages(item_full_path: str, item, possible_dependencies: set[str],
-                     usages: dict[str, list[str]]):
+def find_dependency_usages(item_full_path: str, item, possible_dependencies: set[str],
+                           usages: dict[str, list[str]]):
+    """Open a Java source code file and check its contents for dependency usages"""
     try:
         with open(item_full_path, encoding='utf-8') as source_file:
             source_code = source_file.readlines()
-            search_source_code_for_usages(item, source_code, possible_dependencies, usages)
+            search_source_code_for_dependency_usages(item, source_code, possible_dependencies,
+                                                     usages)
 
     # Files that don't use UTF-8 will throw exceptions when opened, we will catch these and skip
     # the file in question
@@ -100,9 +109,10 @@ def find_code_usages(item_full_path: str, item, possible_dependencies: set[str],
         print("Decoding error, skipping file " + item_full_path)
 
 
-def search_source_code_for_usages(item: str, source_code: list[AnyStr],
-                                  possible_dependencies: set[str],
-                                  usages: dict[str, list[str]]):
+def search_source_code_for_dependency_usages(item: str, source_code: list[AnyStr],
+                                             possible_dependencies: set[str],
+                                             usages: dict[str, list[str]]):
+    """Search the code line by line for dependency usages, end search after the import section"""
     import_section_reached = False
     package_name = ""
     for line in source_code:
@@ -128,23 +138,25 @@ def search_source_code_for_usages(item: str, source_code: list[AnyStr],
             break
 
 
-def search_target_directory(root_dir: str, possible_dependencies: set[str],
-                            usages: dict[str, list[str]]):
+def search_target_directory_for_dependency_usages(root_dir: str, possible_dependencies: set[str],
+                                                  usages: dict[str, list[str]]):
+    """Recursively search Java coding in the directory for usages of the collected dependencies"""
     root_dir = os.path.abspath(root_dir)
     print("Checking for usages in " + root_dir)
 
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
         if item.endswith(JAVA_FILE_TYPE):
-            find_code_usages(item_full_path, item, possible_dependencies, usages)
+            find_dependency_usages(item_full_path, item, possible_dependencies, usages)
 
         if os.path.isdir(item_full_path):
-            search_target_directory(item_full_path, possible_dependencies, usages)
+            search_target_directory_for_dependency_usages(item_full_path, possible_dependencies,
+                                                          usages)
 
 
 def convert_found_data_to_csv(found_usages: dict[str, list[str]], source_label: str,
-                              target_label: str) -> list[
-    list[str]]:
+                              target_label: str) -> list[list[str]]:
+    """Convert the findings to CSV and return the transformed data"""
     data = [["Source Root", "Used Class", "Target Root", "Consuming Class"]]
     for key in found_usages.keys():
         usages_of_key = found_usages[key]
@@ -156,6 +168,7 @@ def convert_found_data_to_csv(found_usages: dict[str, list[str]], source_label: 
 
 
 def create_and_open_csv_file(data: list[list[str]]):
+    """Write the CSV data to disk and open the created file"""
     csv_file_path = 'dependency_usages.csv'
     with open(csv_file_path, 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
@@ -172,6 +185,7 @@ def create_and_open_csv_file(data: list[list[str]]):
 
 
 def get_root_directory(directory_from_command_line: str, dialogue_title: str) -> (str, bool):
+    """Get root directory from file chooser or from command line argument"""
     if directory_from_command_line is None:
         # we don't want a full GUI, this line keeps the root window from appearing
         tkinter.Tk().withdraw()
@@ -183,6 +197,7 @@ def get_root_directory(directory_from_command_line: str, dialogue_title: str) ->
 
 
 def get_command_line_arguments() -> Namespace:
+    """Parse command line arguments and return results"""
     parser = argparse.ArgumentParser(
         prog='CodeFinder',
         description='Finds the usages of code from the source directory in the target directory')
@@ -193,6 +208,7 @@ def get_command_line_arguments() -> Namespace:
 
 
 def main():
+    """Run the CodeFinder"""
     args = get_command_line_arguments()
 
     source_root, source_from_dialogue = get_root_directory(args.source_root,
@@ -219,7 +235,7 @@ def main():
     print(str(len(possible_dependencies)) + " possible dependencies found in source directory")
 
     print("Starting to scan target directory for code from the source directory")
-    search_target_directory(target_root, possible_dependencies, usages)
+    search_target_directory_for_dependency_usages(target_root, possible_dependencies, usages)
     print("Usages of " + str(len(usages.keys())) + " classes found")
 
     print("Converting found usages to CSV format")
